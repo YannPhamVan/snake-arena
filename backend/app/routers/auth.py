@@ -40,13 +40,16 @@ async def signup(request: SignupRequest):
     if mock_db.get_user_by_email(request.email) or mock_db.get_user_by_username(request.username):
         raise HTTPException(status_code=400, detail="User already exists")
     
-    user = mock_db.create_user(request.username, request.email)
+    user = mock_db.create_user(request.username, request.email, request.password)
     return AuthResponse(user=user, token="mock-jwt-token")
 
 @router.post("/login", response_model=AuthResponse, responses={401: {"model": ErrorResponse}})
 async def login(request: LoginRequest):
     user = mock_db.get_user_by_email(request.email)
-    if not user or request.password == "wrong-password": # Simple mock check
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    if not mock_db.verify_password(request.email, request.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     return AuthResponse(user=user, token="mock-jwt-token")

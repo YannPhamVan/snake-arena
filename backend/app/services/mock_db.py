@@ -14,42 +14,96 @@ class MockDatabase:
 
     def _initialize(self):
         self.users: Dict[str, User] = {}
+        self.passwords: Dict[str, str] = {}  # email -> password mapping
         self.leaderboard: List[LeaderboardEntry] = []
         self.active_sessions: Dict[str, GameSession] = {}
         self._initialize_mock_data()
 
     def _initialize_mock_data(self):
-        # Create mock users
+        import random
+        from datetime import timedelta
+        
+        # Create mock users with varied scores
         mock_users_data = [
             {"username": "SnakeMaster", "email": "snake@example.com", "highScore": 2500},
             {"username": "GridWarrior", "email": "grid@example.com", "highScore": 2200},
             {"username": "NeonViper", "email": "neon@example.com", "highScore": 1950},
             {"username": "CyberSerpent", "email": "cyber@example.com", "highScore": 1800},
             {"username": "PixelPython", "email": "pixel@example.com", "highScore": 1650},
+            {"username": "CodeCobra", "email": "cobra@example.com", "highScore": 1500},
+            {"username": "ByteBasilisk", "email": "basilisk@example.com", "highScore": 1400},
+            {"username": "RetroReptile", "email": "retro@example.com", "highScore": 1250},
+            {"username": "ArcadeAdder", "email": "adder@example.com", "highScore": 1100},
+            {"username": "GlitchGarter", "email": "garter@example.com", "highScore": 950},
         ]
 
         for i, data in enumerate(mock_users_data):
             user_id = f"user-{i}"
             user = User(id=user_id, **data)
             self.users[user_id] = user
+            # Store password for mock users (all use "password123")
+            self.passwords[user.email] = "password123"
 
-            # Add leaderboard entries
+            # Add multiple leaderboard entries with varied timestamps
+            # Recent high score for walls mode
             self.leaderboard.append(LeaderboardEntry(
-                id=f"entry-{i}-walls",
+                id=f"entry-{i}-walls-recent",
                 username=user.username,
                 score=user.highScore,
                 mode=GameMode.WALLS,
-                timestamp=datetime.now()
+                timestamp=datetime.now() - timedelta(hours=random.randint(1, 24))
             ))
+            
+            # Older entry for walls mode
             self.leaderboard.append(LeaderboardEntry(
-                id=f"entry-{i}-passthrough",
+                id=f"entry-{i}-walls-old",
                 username=user.username,
-                score=int(user.highScore * 1.2),
+                score=int(user.highScore * 0.8),
+                mode=GameMode.WALLS,
+                timestamp=datetime.now() - timedelta(days=random.randint(1, 7))
+            ))
+            
+            # Recent entry for pass-through mode (typically higher scores)
+            self.leaderboard.append(LeaderboardEntry(
+                id=f"entry-{i}-passthrough-recent",
+                username=user.username,
+                score=int(user.highScore * 1.3),
                 mode=GameMode.PASS_THROUGH,
-                timestamp=datetime.now()
+                timestamp=datetime.now() - timedelta(hours=random.randint(1, 48))
+            ))
+            
+            # Older entry for pass-through mode
+            self.leaderboard.append(LeaderboardEntry(
+                id=f"entry-{i}-passthrough-old",
+                username=user.username,
+                score=int(user.highScore * 1.1),
+                mode=GameMode.PASS_THROUGH,
+                timestamp=datetime.now() - timedelta(days=random.randint(2, 14))
             ))
 
-        self.leaderboard.sort(key=lambda x: x.score, reverse=True)
+        # Create some active game sessions
+        self._create_active_sessions()
+    
+    def _create_active_sessions(self):
+        import random
+        # Create 3-5 active sessions with random users and modes
+        users_list = list(self.users.values())
+        num_sessions = random.randint(3, 5)
+        
+        for i in range(num_sessions):
+            user = random.choice(users_list)
+            mode = random.choice([GameMode.WALLS, GameMode.PASS_THROUGH])
+            current_score = random.randint(100, 1000)
+            
+            session = GameSession(
+                id=f"session-active-{i}",
+                userId=user.id,
+                username=user.username,
+                score=current_score,
+                mode=mode,
+                isActive=True
+            )
+            self.active_sessions[session.id] = session
 
     def reset(self):
         self._initialize()
@@ -67,11 +121,17 @@ class MockDatabase:
                 return user
         return None
 
-    def create_user(self, username: str, email: str) -> User:
+    def create_user(self, username: str, email: str, password: str) -> User:
         user_id = f"user-{uuid.uuid4()}"
         user = User(id=user_id, username=username, email=email, highScore=0)
         self.users[user_id] = user
+        self.passwords[email] = password  # Store password
         return user
+    
+    def verify_password(self, email: str, password: str) -> bool:
+        """Verify if the password matches for the given email"""
+        stored_password = self.passwords.get(email)
+        return stored_password == password if stored_password else False
 
     # Leaderboard methods
     def get_leaderboard(self, mode: Optional[GameMode] = None, limit: int = 10) -> List[LeaderboardEntry]:
