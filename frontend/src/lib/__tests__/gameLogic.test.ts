@@ -16,7 +16,7 @@ describe('gameLogic', () => {
   describe('createInitialGameState', () => {
     it('should create a valid initial game state', () => {
       const state = createInitialGameState();
-      
+
       expect(state.snake).toHaveLength(3);
       expect(state.direction).toBe('RIGHT');
       expect(state.score).toBe(0);
@@ -28,7 +28,7 @@ describe('gameLogic', () => {
     it('should place snake in center of grid', () => {
       const state = createInitialGameState();
       const center = Math.floor(GRID_SIZE / 2);
-      
+
       expect(state.snake[0].x).toBe(center);
       expect(state.snake[0].y).toBe(center);
     });
@@ -38,7 +38,7 @@ describe('gameLogic', () => {
     it('should generate food within grid bounds', () => {
       const snake = [{ x: 10, y: 10 }];
       const food = generateFood(snake);
-      
+
       expect(food.x).toBeGreaterThanOrEqual(0);
       expect(food.x).toBeLessThan(GRID_SIZE);
       expect(food.y).toBeGreaterThanOrEqual(0);
@@ -48,7 +48,7 @@ describe('gameLogic', () => {
     it('should not generate food on snake position', () => {
       const snake = [{ x: 5, y: 5 }];
       const food = generateFood(snake);
-      
+
       expect(food.x !== 5 || food.y !== 5).toBe(true);
     });
   });
@@ -57,7 +57,7 @@ describe('gameLogic', () => {
     it('should move up correctly', () => {
       const head = { x: 5, y: 5 };
       const next = getNextHeadPosition(head, 'UP');
-      
+
       expect(next.x).toBe(5);
       expect(next.y).toBe(4);
     });
@@ -65,7 +65,7 @@ describe('gameLogic', () => {
     it('should move down correctly', () => {
       const head = { x: 5, y: 5 };
       const next = getNextHeadPosition(head, 'DOWN');
-      
+
       expect(next.x).toBe(5);
       expect(next.y).toBe(6);
     });
@@ -73,7 +73,7 @@ describe('gameLogic', () => {
     it('should move left correctly', () => {
       const head = { x: 5, y: 5 };
       const next = getNextHeadPosition(head, 'LEFT');
-      
+
       expect(next.x).toBe(4);
       expect(next.y).toBe(5);
     });
@@ -81,7 +81,7 @@ describe('gameLogic', () => {
     it('should move right correctly', () => {
       const head = { x: 5, y: 5 };
       const next = getNextHeadPosition(head, 'RIGHT');
-      
+
       expect(next.x).toBe(6);
       expect(next.y).toBe(5);
     });
@@ -91,7 +91,7 @@ describe('gameLogic', () => {
     it('should wrap negative x position', () => {
       const pos = { x: -1, y: 5 };
       const wrapped = wrapPosition(pos);
-      
+
       expect(wrapped.x).toBe(GRID_SIZE - 1);
       expect(wrapped.y).toBe(5);
     });
@@ -99,7 +99,7 @@ describe('gameLogic', () => {
     it('should wrap position exceeding grid width', () => {
       const pos = { x: GRID_SIZE, y: 5 };
       const wrapped = wrapPosition(pos);
-      
+
       expect(wrapped.x).toBe(0);
       expect(wrapped.y).toBe(5);
     });
@@ -107,7 +107,7 @@ describe('gameLogic', () => {
     it('should wrap negative y position', () => {
       const pos = { x: 5, y: -1 };
       const wrapped = wrapPosition(pos);
-      
+
       expect(wrapped.x).toBe(5);
       expect(wrapped.y).toBe(GRID_SIZE - 1);
     });
@@ -139,7 +139,7 @@ describe('gameLogic', () => {
         { x: 5, y: 5 }, // Same as head
         { x: 4, y: 5 },
       ];
-      
+
       expect(checkSelfCollision(head, body)).toBe(true);
     });
 
@@ -150,7 +150,7 @@ describe('gameLogic', () => {
         { x: 7, y: 5 },
         { x: 8, y: 5 },
       ];
-      
+
       expect(checkSelfCollision(head, body)).toBe(false);
     });
   });
@@ -159,7 +159,7 @@ describe('gameLogic', () => {
     it('should move snake forward in pass-through mode', () => {
       const state = createInitialGameState();
       const newState = moveSnake(state, 'pass-through');
-      
+
       expect(newState.snake[0].x).toBe(state.snake[0].x + 1);
     });
 
@@ -167,9 +167,9 @@ describe('gameLogic', () => {
       const state = createInitialGameState();
       state.snake = [{ x: GRID_SIZE - 1, y: 10 }];
       state.direction = 'RIGHT';
-      
+
       const newState = moveSnake(state, 'pass-through');
-      
+
       expect(newState.snake[0].x).toBe(0);
     });
 
@@ -177,9 +177,9 @@ describe('gameLogic', () => {
       const state = createInitialGameState();
       state.snake = [{ x: GRID_SIZE - 1, y: 10 }];
       state.direction = 'RIGHT';
-      
+
       const newState = moveSnake(state, 'walls');
-      
+
       expect(newState.gameOver).toBe(true);
     });
 
@@ -187,9 +187,9 @@ describe('gameLogic', () => {
       const state = createInitialGameState();
       state.food = { x: state.snake[0].x + 1, y: state.snake[0].y };
       state.direction = 'RIGHT';
-      
+
       const newState = moveSnake(state, 'pass-through');
-      
+
       expect(newState.score).toBe(10);
       expect(newState.snake.length).toBe(state.snake.length + 1);
     });
@@ -197,18 +197,18 @@ describe('gameLogic', () => {
     it('should not move when paused', () => {
       const state = createInitialGameState();
       state.paused = true;
-      
+
       const newState = moveSnake(state, 'pass-through');
-      
+
       expect(newState).toEqual(state);
     });
 
     it('should not move when game over', () => {
       const state = createInitialGameState();
       state.gameOver = true;
-      
+
       const newState = moveSnake(state, 'walls');
-      
+
       expect(newState).toEqual(state);
     });
 
@@ -220,10 +220,10 @@ describe('gameLogic', () => {
         { x: 6, y: 6 },
         { x: 5, y: 6 },
       ];
-      state.direction = 'LEFT';
-      
+      state.direction = 'DOWN';
+
       const newState = moveSnake(state, 'pass-through');
-      
+
       expect(newState.gameOver).toBe(true);
     });
   });
@@ -253,7 +253,7 @@ describe('gameLogic', () => {
     it('should decrease speed as score increases', () => {
       const speed0 = getGameSpeed(0);
       const speed100 = getGameSpeed(100);
-      
+
       expect(speed100).toBeLessThan(speed0);
     });
 

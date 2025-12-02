@@ -35,6 +35,14 @@ class MockBackendService {
     this.initializeMockData();
   }
 
+  reset() {
+    this.users.clear();
+    this.leaderboard = [];
+    this.activeSessions.clear();
+    this.currentUser = null;
+    this.initializeMockData();
+  }
+
   private initializeMockData() {
     // Create mock users and leaderboard entries
     const mockUsers = [
@@ -96,9 +104,9 @@ class MockBackendService {
   // Authentication methods
   async login(email: string, password: string): Promise<{ user: User; token: string } | { error: string }> {
     await this.simulateNetworkDelay();
-    
+
     const user = Array.from(this.users.values()).find(u => u.email === email);
-    
+
     if (!user || password.length < 6) {
       return { error: 'Invalid credentials' };
     }
@@ -106,13 +114,13 @@ class MockBackendService {
     this.currentUser = user;
     localStorage.setItem('mockToken', 'mock-jwt-token');
     localStorage.setItem('mockUser', JSON.stringify(user));
-    
+
     return { user, token: 'mock-jwt-token' };
   }
 
   async signup(username: string, email: string, password: string): Promise<{ user: User; token: string } | { error: string }> {
     await this.simulateNetworkDelay();
-    
+
     const existingUser = Array.from(this.users.values()).find(
       u => u.email === email || u.username === username
     );
@@ -149,21 +157,21 @@ class MockBackendService {
 
   getCurrentUser(): User | null {
     if (this.currentUser) return this.currentUser;
-    
+
     const storedUser = localStorage.getItem('mockUser');
     if (storedUser) {
       this.currentUser = JSON.parse(storedUser);
       return this.currentUser;
     }
-    
+
     return null;
   }
 
   // Leaderboard methods
   async getLeaderboard(mode?: 'pass-through' | 'walls', limit: number = 10): Promise<LeaderboardEntry[]> {
     await this.simulateNetworkDelay();
-    
-    let filtered = mode 
+
+    let filtered = mode
       ? this.leaderboard.filter(entry => entry.mode === mode)
       : this.leaderboard;
 
@@ -172,7 +180,7 @@ class MockBackendService {
 
   async submitScore(score: number, mode: 'pass-through' | 'walls'): Promise<void> {
     await this.simulateNetworkDelay();
-    
+
     const user = this.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
@@ -208,7 +216,7 @@ class MockBackendService {
 
   async createSession(mode: 'pass-through' | 'walls'): Promise<GameSession> {
     await this.simulateNetworkDelay();
-    
+
     const user = this.getCurrentUser();
     if (!user) throw new Error('Not authenticated');
 
@@ -227,7 +235,7 @@ class MockBackendService {
 
   async updateSession(sessionId: string, score: number): Promise<void> {
     await this.simulateNetworkDelay();
-    
+
     const session = this.activeSessions.get(sessionId);
     if (session) {
       session.score = score;
@@ -237,7 +245,7 @@ class MockBackendService {
 
   async endSession(sessionId: string): Promise<void> {
     await this.simulateNetworkDelay();
-    
+
     const session = this.activeSessions.get(sessionId);
     if (session) {
       session.isActive = false;
