@@ -58,9 +58,14 @@ export const api = {
     },
 
     async logout(): Promise<void> {
-        await request('/auth/logout', { method: 'POST' });
-        localStorage.removeItem('mockToken');
-        localStorage.removeItem('mockUser');
+        try {
+            await request('/auth/logout', { method: 'POST' });
+        } catch (error) {
+            console.error('Logout failed:', error);
+        } finally {
+            localStorage.removeItem('mockToken');
+            localStorage.removeItem('mockUser');
+        }
     },
 
     async getCurrentUser(): Promise<User | null> {
@@ -76,11 +81,11 @@ export const api = {
         const params = new URLSearchParams();
         if (mode) params.append('mode', mode);
         params.append('limit', limit.toString());
-        return request<LeaderboardEntry[]>(`/leaderboard?${params.toString()}`);
+        return request<LeaderboardEntry[]>(`/leaderboard/?${params.toString()}`);
     },
 
     async submitScore(score: number, mode: 'pass-through' | 'walls'): Promise<void> {
-        await request('/leaderboard', {
+        await request('/leaderboard/', {
             method: 'POST',
             body: JSON.stringify({ score, mode }),
         });
@@ -88,7 +93,7 @@ export const api = {
 
     // Sessions
     async getActiveSessions(): Promise<GameSession[]> {
-        return request<GameSession[]>('/sessions');
+        return request<GameSession[]>('/sessions/');
     },
 
     async getSession(id: string): Promise<GameSession | null> {
@@ -101,7 +106,7 @@ export const api = {
     },
 
     async createSession(mode: 'pass-through' | 'walls'): Promise<GameSession> {
-        return request<GameSession>('/sessions', {
+        return request<GameSession>('/sessions/', {
             method: 'POST',
             body: JSON.stringify({ mode }),
         });

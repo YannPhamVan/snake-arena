@@ -9,8 +9,8 @@ docker-compose up -d
 ```
 
 Access the application:
-- **Frontend**: http://localhost
-- **Backend API**: http://localhost/api
+- **Frontend**: http://localhost:8080
+- **Backend API**: http://localhost:8080/api
 - **Backend Direct**: http://localhost:8000 (if needed)
 
 ## Prerequisites
