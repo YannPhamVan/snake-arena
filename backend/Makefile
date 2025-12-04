@@ -1,4 +1,4 @@
-.PHONY: install run test clean init-db seed-db
+.PHONY: install run test test-integration test-all clean init-db seed-db
 
 install:
 	uv sync
@@ -13,7 +13,13 @@ run:
 	uv run uvicorn app.main:app --reload --port 8000
 
 test:
-	uv run pytest
+	uv run pytest tests/ -v
+
+test-integration:
+	uv run pytest tests_integration/ -v
+
+test-all:
+	uv run pytest tests/ tests_integration/ -v
 
 clean:
 	rm -rf .venv
