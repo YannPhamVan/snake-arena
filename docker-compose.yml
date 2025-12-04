@@ -1,0 +1,70 @@
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: snake-arena-db
+    environment:
+      POSTGRES_DB: snakearena
+      POSTGRES_USER: snakearena
+      POSTGRES_PASSWORD: snakearena
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - snake-arena-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U snakearena" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: snake-arena-backend
+    environment:
+      DATABASE_URL: postgresql://snakearena:snakearena@db:5432/snakearena
+      SECRET_KEY: ${SECRET_KEY:-change-this-in-production-please}
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_DAYS: 7
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - snake-arena-network
+    restart: unless-stopped
+    # Override CMD to initialize database first
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        echo "Waiting for database..."
+        sleep 5
+        echo "Initializing database with seed data..."
+        uv run python -m app.init_db --seed
+        echo "Starting FastAPI server..."
+        exec uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+  # React Frontend with nginx
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: snake-arena-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - snake-arena-network
+    restart: unless-stopped
+
+networks:
+  snake-arena-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
