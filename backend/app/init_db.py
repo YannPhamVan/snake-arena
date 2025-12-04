@@ -24,6 +24,12 @@ def seed_database():
     db = SessionLocal()
     
     try:
+        # Check if database is already seeded
+        existing_users = db.query(DBUser).count()
+        if existing_users > 0:
+            print(f"✓ Database already contains {existing_users} users, skipping seed")
+            return
+        
         # Create mock users with varied scores
         mock_users_data = [
             {"username": "SnakeMaster", "email": "snake@example.com", "high_score": 2500},
