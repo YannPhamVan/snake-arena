@@ -1,70 +1,95 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy.orm import Session
 from ..models import AuthResponse, LoginRequest, SignupRequest, User, ErrorResponse
-from ..services.mock_db import mock_db
+from ..services.database import db_service
+from ..database import get_db
+from ..auth import create_access_token, decode_access_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 security = HTTPBearer()
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> User:
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+) -> User:
+    """
+    Dependency to get the current authenticated user from JWT token.
+    Raises HTTPException if token is invalid or user not found.
+    """
     token = credentials.credentials
-    if token != "mock-jwt-token":
+    
+    # Decode the JWT token
+    payload = decode_access_token(token)
+    if payload is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
+            detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    # In a real app, we would decode the token to get the user ID
-    # For mock, we'll just return the last logged in user or a default one if available
-    # But since we don't have request context here easily without more complex mocking,
-    # we will rely on the client sending the token we gave them.
-    # For simplicity in this mock, we'll just assume the token is valid and return a mock user
-    # or try to find a user if we had a way to map token to user.
-    # Given the mock nature, let's just return the first user found or raise if empty.
     
-    # BETTER APPROACH for mock:
-    # The frontend mock stores user in localStorage.
-    # Here we can't easily know WHICH user corresponds to the token without state.
-    # But `mock_db` is a singleton.
-    # Let's just return a dummy user for now if the token is valid, 
-    # OR we could store a mapping in mock_db.
+    # Extract user ID from token
+    user_id: str = payload.get("sub")
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     
-    # Let's assume the token is valid for the "current" user concept in the mock DB 
-    # isn't quite right for a server.
-    # We will just verify the token is the mock token.
-    return User(id="mock-user-id", username="MockUser", email="mock@example.com", highScore=0)
+    # Get user from database
+    db_user = db_service.get_user_by_id(db, user_id)
+    if db_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    return User(**db_user.to_dict())
 
 
 @router.post("/signup", response_model=AuthResponse, responses={400: {"model": ErrorResponse}})
-async def signup(request: SignupRequest):
-    if mock_db.get_user_by_email(request.email) or mock_db.get_user_by_username(request.username):
-        raise HTTPException(status_code=400, detail="User already exists")
+async def signup(request: SignupRequest, db: Session = Depends(get_db)):
+    """Register a new user"""
+    # Check if user already exists
+    if db_service.get_user_by_email(db, request.email):
+        raise HTTPException(status_code=400, detail="Email already registered")
     
-    user = mock_db.create_user(request.username, request.email, request.password)
-    return AuthResponse(user=user, token="mock-jwt-token")
+    if db_service.get_user_by_username(db, request.username):
+        raise HTTPException(status_code=400, detail="Username already taken")
+    
+    # Create user with hashed password
+    user = db_service.create_user(db, request.username, request.email, request.password)
+    
+    # Generate JWT token
+    access_token = create_access_token(data={"sub": user.id})
+    
+    return AuthResponse(user=user, token=access_token)
+
 
 @router.post("/login", response_model=AuthResponse, responses={401: {"model": ErrorResponse}})
-async def login(request: LoginRequest):
-    user = mock_db.get_user_by_email(request.email)
-    if not user:
+async def login(request: LoginRequest, db: Session = Depends(get_db)):
+    """Login a user"""
+    # Verify credentials
+    db_user = db_service.verify_user_password(db, request.email, request.password)
+    if not db_user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    if not mock_db.verify_password(request.email, request.password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    # Generate JWT token
+    access_token = create_access_token(data={"sub": db_user.id})
     
-    return AuthResponse(user=user, token="mock-jwt-token")
+    return AuthResponse(user=User(**db_user.to_dict()), token=access_token)
+
 
 @router.post("/logout")
 async def logout(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Logout the current user (client-side - just invalidate token)"""
     return {"message": "Logout successful"}
 
+
 @router.get("/me", response_model=User)
-async def get_me(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    # In a real app, decode token. Here, just return a mock user or the last created one for demo
-    # For the purpose of the test, let's return the user from the mock DB if we can find one,
-    # or just a placeholder.
-    # To make it testable, let's return the user with the highest score (SnakeMaster) or similar.
-    users = list(mock_db.users.values())
-    if users:
-        return users[0]
-    raise HTTPException(status_code=401, detail="Not authenticated")
+async def get_me(current_user: User = Depends(get_current_user)):
+    """Get current authenticated user profile"""
+    return current_user
