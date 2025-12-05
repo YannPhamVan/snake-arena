@@ -24,6 +24,8 @@ RUN uv sync --frozen --no-dev
 
 # Copy application code
 COPY backend/app ./app
+COPY start.sh .
+RUN chmod +x start.sh
 
 # Copy built frontend assets
 COPY --from=frontend-builder /app/dist /app/static
@@ -40,4 +42,4 @@ ENV PYTHONPATH="/app"
 EXPOSE 8000
 
 # Run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["./start.sh"]
