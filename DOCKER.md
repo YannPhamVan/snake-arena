@@ -270,3 +270,30 @@ snake-arena/
 - [Docker Compose Documentation](https://docs.docker.com/compose)
 - [nginx Documentation](https://nginx.org/en/docs)
 - [PostgreSQL Documentation](https://www.postgresql.org/docs)
+
+## Unified Container Deployment
+
+For simplified deployment, you can use the single-container approach which bundles the Frontend and Backend together.
+
+### Build and Run
+
+```bash
+# Build the unified image
+docker build -t snake-arena-unified -f Dockerfile .
+
+# Run locally (requires external DB or link to db container)
+docker run -p 8080:8000 --env-file .env.docker snake-arena-unified
+```
+
+### Testing via Docker Compose
+
+We have added a `unified` service to `docker-compose.yml` for testing:
+
+```bash
+docker-compose up -d unified
+# Access at http://localhost:8081
+```
+
+The unified container serves:
+- Frontend at root `/`
+- API at `/api`
