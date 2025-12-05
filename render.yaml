@@ -1,0 +1,28 @@
+services:
+  # Web Service (Unified Container)
+  - type: web
+    name: snake-arena
+    runtime: docker
+    plan: free
+    region: oregon
+    buildCommand: docker build -t snake-arena .
+    startCommand: /bin/sh -c "uv run python -m app.init_db --seed && uvicorn app.main:app --host 0.0.0.0 --port 10000"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: snake-arena-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PORT
+        value: 10000
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+databases:
+  # PostgreSQL Database
+  - name: snake-arena-db
+    databaseName: snakearena
+    user: snakearena
+    plan: free
+    region: oregon
