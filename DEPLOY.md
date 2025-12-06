@@ -39,3 +39,29 @@ We have configured this project with a `render.yaml` Blueprint, making deploymen
 ### Troubleshooting
 - **Logs**: Click on the `snake-arena` service in Render to view the build and runtime logs.
 - **Database**: The free tier database on Render expires after 90 days. For long-term usage, upgrade to a paid instance ($7/month).
+
+## CI/CD Pipeline
+
+We have included a GitHub Actions workflow (`.github/workflows/ci.yml`) that runs tests on every push.
+
+### Automating Deployment
+
+To enable the pipeline to automatically deploy to Render after tests pass:
+
+1.  **Get Deploy Hook URL**:
+    - Go to your Render Dashboard.
+    - Click on your **Web Service** (`snake-arena`).
+    - Go to **Settings** > **Deploy Hook**.
+    - Copy the `https://api.render.com/deploy/...` URL.
+
+2.  **Add Secret to GitHub**:
+    - Go to your GitHub Repository.
+    - **Settings** > **Secrets and variables** > **Actions**.
+    - Click **New repository secret**.
+    - Name: `RENDER_DEPLOY_HOOK_URL`.
+    - Value: (Paste the URL you copied).
+    - Click **Add secret**.
+
+3.  **Disable Auto-Deploy (Optional)**:
+    - In Render Settings, set "Auto-Deploy" to **No**.
+    - This ensures Render *only* deploys when GitHub Actions triggers it (after tests pass).

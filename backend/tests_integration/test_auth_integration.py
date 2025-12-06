@@ -17,7 +17,7 @@ def test_complete_auth_flow(client: TestClient):
         "email": "integration@example.com",
         "password": "securepassword123"
     }
-    signup_response = client.post("/auth/signup", json=signup_data)
+    signup_response = client.post("/api/auth/signup", json=signup_data)
     assert signup_response.status_code == 200
     
     signup_result = signup_response.json()
@@ -32,7 +32,7 @@ def test_complete_auth_flow(client: TestClient):
     
     # Step 2: Verify we can access profile with the token
     headers = {"Authorization": f"Bearer {first_token}"}
-    profile_response = client.get("/auth/me", headers=headers)
+    profile_response = client.get("/api/auth/me", headers=headers)
     assert profile_response.status_code == 200
     
     profile = profile_response.json()
@@ -40,7 +40,7 @@ def test_complete_auth_flow(client: TestClient):
     assert profile["username"] == "integrationuser"
     
     # Step 3: Logout (client-side operation, token still valid on server)
-    logout_response = client.post("/auth/logout", headers=headers)
+    logout_response = client.post("/api/auth/logout", headers=headers)
     assert logout_response.status_code == 200
     
     # Step 4: Login with same credentials
@@ -48,7 +48,7 @@ def test_complete_auth_flow(client: TestClient):
         "email": "integration@example.com",
         "password": "securepassword123"
     }
-    login_response = client.post("/auth/login", json=login_data)
+    login_response = client.post("/api/auth/login", json=login_data)
     assert login_response.status_code == 200
     
     login_result = login_response.json()
@@ -59,7 +59,7 @@ def test_complete_auth_flow(client: TestClient):
     
     # Step 5: Verify new token works
     new_headers = {"Authorization": f"Bearer {second_token}"}
-    new_profile_response = client.get("/auth/me", headers=new_headers)
+    new_profile_response = client.get("/api/auth/me", headers=new_headers)
     assert new_profile_response.status_code == 200
     assert new_profile_response.json()["id"] == user_id
 
@@ -74,7 +74,7 @@ def test_duplicate_signup_prevention(client: TestClient):
     }
     
     # First signup should succeed
-    first_response = client.post("/auth/signup", json=signup_data)
+    first_response = client.post("/api/auth/signup", json=signup_data)
     assert first_response.status_code == 200
     
     # Duplicate email should fail
@@ -83,7 +83,7 @@ def test_duplicate_signup_prevention(client: TestClient):
         "email": "unique@example.com",
         "password": "password123"
     }
-    response = client.post("/auth/signup", json=duplicate_email)
+    response = client.post("/api/auth/signup", json=duplicate_email)
     assert response.status_code == 400
     assert "already registered" in response.json()["detail"].lower()
     
@@ -93,7 +93,7 @@ def test_duplicate_signup_prevention(client: TestClient):
         "email": "different@example.com",
         "password": "password123"
     }
-    response = client.post("/auth/signup", json=duplicate_username)
+    response = client.post("/api/auth/signup", json=duplicate_username)
     assert response.status_code == 400
     assert "already taken" in response.json()["detail"].lower()
 
@@ -107,14 +107,14 @@ def test_invalid_credentials(client: TestClient):
         "email": "test@example.com",
         "password": "correctpassword"
     }
-    client.post("/auth/signup", json=signup_data)
+    client.post("/api/auth/signup", json=signup_data)
     
     # Try to login with wrong password
     wrong_password = {
         "email": "test@example.com",
         "password": "wrongpassword"
     }
-    response = client.post("/auth/login", json=wrong_password)
+    response = client.post("/api/auth/login", json=wrong_password)
     assert response.status_code == 401
     
     # Try to login with non-existent email
@@ -122,7 +122,7 @@ def test_invalid_credentials(client: TestClient):
         "email": "nonexistent@example.com",
         "password": "anypassword"
     }
-    response = client.post("/auth/login", json=wrong_email)
+    response = client.post("/api/auth/login", json=wrong_email)
     assert response.status_code == 401
 
 
@@ -131,10 +131,10 @@ def test_token_validation(client: TestClient):
     
     # Invalid token format
     headers = {"Authorization": "Bearer invalid.token.here"}
-    response = client.get("/auth/me", headers=headers)
+    response = client.get("/api/auth/me", headers=headers)
     assert response.status_code == 401
     
     # Missing token
-    response = client.get("/auth/me")
+    response = client.get("/api/auth/me")
     assert response.status_code == 401  # FastAPI/HTTPBearer returns 401 for missing auth
 

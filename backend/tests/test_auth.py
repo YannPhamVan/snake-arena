@@ -5,7 +5,7 @@ from app.models import GameMode
 
 def test_signup(client: TestClient, db):
     """Test user signup"""
-    response = client.post("/auth/signup", json={
+    response = client.post("/api/auth/signup", json={
         "username": "newuser",
         "email": "new@example.com",
         "password": "password123"
@@ -21,13 +21,13 @@ def test_signup(client: TestClient, db):
 def test_signup_duplicate_email(client: TestClient, db):
     """Test signup with duplicate email"""
     # Create first user
-    client.post("/auth/signup", json={
+    client.post("/api/auth/signup", json={
         "username": "user1",
         "email": "dup@example.com",
         "password": "password123"
     })
     # Try to create user with same email
-    response = client.post("/auth/signup", json={
+    response = client.post("/api/auth/signup", json={
         "username": "user2",
         "email": "dup@example.com",
         "password": "password123"
@@ -39,13 +39,13 @@ def test_signup_duplicate_email(client: TestClient, db):
 def test_signup_duplicate_username(client: TestClient, db):
     """Test signup with duplicate username"""
     # Create first user
-    client.post("/auth/signup", json={
+    client.post("/api/auth/signup", json={
         "username": "duplicate",
         "email": "user1@example.com",
         "password": "password123"
     })
     # Try to create user with same username
-    response = client.post("/auth/signup", json={
+    response = client.post("/api/auth/signup", json={
         "username": "duplicate",
         "email": "user2@example.com",
         "password": "password123"
@@ -57,7 +57,7 @@ def test_signup_duplicate_username(client: TestClient, db):
 def test_login(client: TestClient, db):
     """Test user login"""
     # First signup
-    signup_response = client.post("/auth/signup", json={
+    signup_response = client.post("/api/auth/signup", json={
         "username": "testuser",
         "email": "test@example.com",
         "password": "password123"
@@ -65,7 +65,7 @@ def test_login(client: TestClient, db):
     assert signup_response.status_code == 200
     
     # Then login
-    response = client.post("/auth/login", json={
+    response = client.post("/api/auth/login", json={
         "email": "test@example.com",
         "password": "password123"
     })
@@ -77,7 +77,7 @@ def test_login(client: TestClient, db):
 
 def test_login_invalid_credentials(client: TestClient, db):
     """Test login with invalid credentials"""
-    response = client.post("/auth/login", json={
+    response = client.post("/api/auth/login", json={
         "email": "nonexistent@example.com",
         "password": "wrongpassword"
     })
@@ -87,7 +87,7 @@ def test_login_invalid_credentials(client: TestClient, db):
 def test_logout(client: TestClient, db):
     """Test logout endpoint"""
     # Signup to get a token
-    signup_response = client.post("/auth/signup", json={
+    signup_response = client.post("/api/auth/signup", json={
         "username": "testuser",
         "email": "test@example.com",
         "password": "password123"
@@ -95,14 +95,14 @@ def test_logout(client: TestClient, db):
     token = signup_response.json()["token"]
     
     headers = {"Authorization": f"Bearer {token}"}
-    response = client.post("/auth/logout", headers=headers)
+    response = client.post("/api/auth/logout", headers=headers)
     assert response.status_code == 200
 
 
 def test_get_me(client: TestClient, db):
     """Test getting current user profile"""
     # Signup to get a token
-    signup_response = client.post("/auth/signup", json={
+    signup_response = client.post("/api/auth/signup", json={
         "username": "testuser",
         "email": "test@example.com",
         "password": "password123"
@@ -110,7 +110,7 @@ def test_get_me(client: TestClient, db):
     token = signup_response.json()["token"]
     
     headers = {"Authorization": f"Bearer {token}"}
-    response = client.get("/auth/me", headers=headers)
+    response = client.get("/api/auth/me", headers=headers)
     assert response.status_code == 200
     data = response.json()
     assert data["username"] == "testuser"
@@ -120,6 +120,6 @@ def test_get_me(client: TestClient, db):
 def test_get_me_invalid_token(client: TestClient, db):
     """Test getting current user with invalid token"""
     headers = {"Authorization": "Bearer invalid-token"}
-    response = client.get("/auth/me", headers=headers)
+    response = client.get("/api/auth/me", headers=headers)
     assert response.status_code == 401
 
