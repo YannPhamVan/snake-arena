@@ -2,6 +2,8 @@
 
 **Snake Arena** is a modern, web-based implementation of the classic Snake game, featuring user authentication, persistent leaderboards, multiple game modes, and a robust backend API.
 
+> 🎓 This project was built as part of Module 2 of the [AI Dev Tools Zoomcamp](https://datatalks.club/blog/ai-dev-tools-zoomcamp-2025-free-course-to-master-coding-assistants-agents-and-automation.html).
+
 ## 📸 Screenshots
 
 | Dashboard | Gameplay |
