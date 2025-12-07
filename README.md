@@ -1,4 +1,4 @@
-![Snake Arena Banner](/home/codespace/.gemini/antigravity/brain/6904cd1d-ff86-40f3-a383-32b281edc609/banner.png)
+![Snake Arena Banner](./assets/banner.png)
 
 **Snake Arena** is a modern, web-based implementation of the classic Snake game, featuring user authentication, persistent leaderboards, multiple game modes, and a robust backend API.
 
@@ -6,7 +6,7 @@
 
 | Dashboard | Gameplay |
 |:---------:|:--------:|
-| ![Dashboard](/home/codespace/.gemini/antigravity/brain/6904cd1d-ff86-40f3-a383-32b281edc609/dashboard.png) | ![Gameplay](/home/codespace/.gemini/antigravity/brain/6904cd1d-ff86-40f3-a383-32b281edc609/gameplay.png) |
+| ![Dashboard](./assets/dashboard.png) | ![Gameplay](./assets/gameplay.png) |
 
 ## ✨ Features
 
